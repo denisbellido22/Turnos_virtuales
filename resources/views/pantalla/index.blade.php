@@ -107,8 +107,8 @@
 
     // Cuando llega un nuevo evento, recargar los datos de la pantalla
     escucharTurnos(eventos, (payload) => {
-        // Mostrar notificación visual
-        const notificacion = new NotificationTurno(payload.turno);
+        // Mostrar notificación visual con acción
+        const notificacion = new NotificationTurno(payload.turno, payload.accion);
         notificacion.mostrar();
 
         // Recargar los datos después de un corto retraso
@@ -128,23 +128,42 @@
     });
 
     // Constructor de notificación visual
-    function NotificationTurno(turno) {
+    function NotificationTurno(turno, accion) {
         this.turno = turno;
+        this.accion = accion;
         this.elemento = null;
 
         this.mostrar = function() {
+            // Determinar el mensaje basado en la acción
+            let mensaje = '';
+            switch (this.accion) {
+                case 'repetir_llamado_audio':
+                    mensaje = 'Acerca-se a la ventanilla – llamado repetido';
+                    break;
+                case 'llamar_audio':
+                    mensaje = 'Llamando al siguiente turno';
+                    break;
+                case 'repetir_llamado':
+                    mensaje = 'Llamado repetido – acércate a la ventanilla';
+                    break;
+                default:
+                    mensaje = 'Turno llamado';
+            }
+
             this.elemento = document.createElement('div');
             this.elemento.className = 'screen-notification';
             this.elemento.innerHTML = `
                 <div class="screen-notification-content">
                     <span class="screen-notification-ticket">${this.turno.codigo}</span>
                     <span class="screen-notification-service">${this.turno.servicio?.nombre}</span>
+                    <span class="screen-notification-accion">${mensaje}</span>
                     <button class="screen-notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
                 </div>
             `;
             document.body.appendChild(this.elemento);
-            // Auto-ocultar después de 5 segundos
-            setTimeout(() => this.elemento.remove(), 5000);
+            // Auto-ocultar según el tipo de acción (2-3 segundos)
+            const duracion = this.accion.includes('repetir') ? 3000 : 2000;
+            setTimeout(() => this.elemento.remove(), duracion);
         };
     }
 </script>
